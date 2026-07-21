@@ -1,0 +1,62 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # --- JOB 1: Instalación y Pruebas ---
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Instalar dependencias exactas
+        run: npm ci
+
+      - name: Ejecutar pruebas (Fail-Fast)
+        run: npm test
+
+  # --- JOB 2: Construcción y Publicación ---
+  build-push:
+    needs: build-test # Fundamental: esto asegura que solo corre si las pruebas pasaron
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Permiso estricto y necesario para publicar la imagen en GitHub
+
+    steps:
+      - name: Descargar código fuente
+        uses: actions/checkout@v4
+
+      - name: Iniciar sesión en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # GitHub te da este token automáticamente
+
+      - name: Construir y publicar imagen Docker
+        run: |
+          # Convertimos el nombre del repositorio a minúsculas para que Docker no se queje
+          IMAGE_ID=${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          # 1. Construir la imagen con la etiqueta del hash del commit
+          docker build -t $IMAGE_ID:${{ github.sha }} .
+          
+          # 2. Etiquetar también como "latest"
+          docker tag $IMAGE_ID:${{ github.sha }} $IMAGE_ID:latest
+          
+          # 3. Subir ambas etiquetas a ghcr.io
+          docker push $IMAGE_ID:${{ github.sha }}
+          docker push $IMAGE_ID:latest
