@@ -81,7 +81,7 @@ jobs:
       - name: Ejecutar escaneo de vulnerabilidades con Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.REGISTRY }}/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]'):latest'
+          image-ref: '${{ env.REGISTRY }}/${{ github.repository }}:latest'
           format: 'table'
           exit-code: '0' # Configurado en 0 para que genere el reporte sin bloquear el pipeline (puedes cambiarlo a 1 si deseas que falle ante vulnerabilidades críticas)
           ignore-unfixed: true
