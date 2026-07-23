@@ -428,6 +428,7 @@ Una vez creado el secreto, se aplica el despliegue que lo consume.
 kubectl apply -f k8s/deployment.yaml
 ```
 ***Verificación:** Al ejecutar el comando `get secret -o yaml`, el clúster devuelve la estructura del secreto mostrando el valor de la `API_KEY` codificado en base64 (`c2tfdGVzdF9zdXBlcl9zZWNyZXQ=`). Esto demuestra que la credencial está protegida en la base de datos de Kubernetes (etcd) y lista para ser inyectada dinámicamente en los pods.*
+
 ---
 
 #### Componente 2: Escaneo de seguridad en el pipeline:
